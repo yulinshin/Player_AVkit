@@ -23,6 +23,27 @@ class VideoPlayer: UIView {
         return button
     }()
 
+    let forwardButton: UIButton = {
+        let button = UIButton(type: .system)
+        let image = UIImage(systemName: "forward")
+        button.setImage(image, for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.tintColor = .white
+        button.addTarget(self, action: #selector(handleForward), for: .touchUpInside)
+        return button
+    }()
+
+    let backwardButton: UIButton = {
+        let button = UIButton(type: .system)
+        let image = UIImage(systemName: "backward")
+        button.setImage(image, for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.tintColor = .white
+        button.addTarget(self, action: #selector(handleBackward), for: .touchUpInside)
+        return button
+    }()
+
+
     let activityIndicatorView: UIActivityIndicatorView = {
         let aiView = UIActivityIndicatorView(style: UIActivityIndicatorView.Style.large)
         aiView.translatesAutoresizingMaskIntoConstraints = false
@@ -57,6 +78,8 @@ class VideoPlayer: UIView {
         addSubview(controlsContainerView)
         addIndicator()
         addPauseButton()
+        addForwardButton()
+        addBackwardButton()
     }
 
     required init?(coder: NSCoder) {
@@ -85,6 +108,28 @@ class VideoPlayer: UIView {
             isShowingControllers = false
         }
 
+    }
+
+    @objc private func handleForward() {
+        guard let player = player else { return }
+        guard let duration = player.currentItem?.duration else { return }
+        let currentTime = CMTimeGetSeconds(player.currentTime())
+        let newTime = currentTime + 10.0
+        if newTime < (CMTimeGetSeconds(duration) - 10.0) {
+            let time: CMTime = CMTimeMake(value: Int64(newTime * 1000), timescale: 1000)
+            player.seek(to: time)
+        }
+    }
+
+    @objc private func handleBackward() {
+        guard let player = player else { return }
+        let currentTime = CMTimeGetSeconds(player.currentTime())
+        var newTime = currentTime - 10.0
+        if newTime < 0 {
+            newTime = 0
+        }
+        let time: CMTime = CMTimeMake(value: Int64(newTime * 1000), timescale: 1000)
+        player.seek(to: time)
     }
 
     @objc private func showControls() {
@@ -125,5 +170,20 @@ class VideoPlayer: UIView {
 
     }
 
+    private func addForwardButton() {
+        controlsContainerView.addSubview(forwardButton)
+        forwardButton.centerYAnchor.constraint(equalTo: centerYAnchor).isActive = true
+        forwardButton.leadingAnchor.constraint(equalTo: pausePlayButton.trailingAnchor, constant: 20).isActive = true
+        forwardButton.widthAnchor.constraint(equalToConstant: 40).isActive = true
+        forwardButton.heightAnchor.constraint(equalToConstant: 40).isActive = true
+    }
+
+    private func addBackwardButton() {
+        controlsContainerView.addSubview(backwardButton)
+        backwardButton.centerYAnchor.constraint(equalTo: centerYAnchor).isActive = true
+        backwardButton.trailingAnchor.constraint(equalTo: pausePlayButton.leadingAnchor, constant: -20).isActive = true
+        backwardButton.widthAnchor.constraint(equalToConstant: 40).isActive = true
+        backwardButton.heightAnchor.constraint(equalToConstant: 40).isActive = true
+    }
 
 }
