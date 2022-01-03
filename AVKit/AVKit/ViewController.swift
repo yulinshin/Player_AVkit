@@ -11,7 +11,13 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
+        setupPlayer()
+    }
+
+    private func setupPlayer() {
+        let videoPlayFrame = view.frame
+        let videoPlayerView  = VideoPlayer(frame: videoPlayFrame)
+        view.addSubview(videoPlayerView)
     }
 
 

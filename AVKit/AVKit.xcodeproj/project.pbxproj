@@ -13,6 +13,7 @@
 		625D4CC22782A8C900AF8010 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 625D4CC02782A8C900AF8010 /* Main.storyboard */; };
 		625D4CC42782A8CB00AF8010 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 625D4CC32782A8CB00AF8010 /* Assets.xcassets */; };
 		625D4CC72782A8CB00AF8010 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 625D4CC52782A8CB00AF8010 /* LaunchScreen.storyboard */; };
+		625D4CCF2782AE4A00AF8010 /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = 625D4CCE2782AE4A00AF8010 /* Player.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +25,7 @@
 		625D4CC32782A8CB00AF8010 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		625D4CC62782A8CB00AF8010 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		625D4CC82782A8CB00AF8010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		625D4CCE2782AE4A00AF8010 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,6 +62,7 @@
 				625D4CBC2782A8C900AF8010 /* SceneDelegate.swift */,
 				625D4CBE2782A8C900AF8010 /* ViewController.swift */,
 				625D4CC02782A8C900AF8010 /* Main.storyboard */,
+				625D4CCE2782AE4A00AF8010 /* Player.swift */,
 				625D4CC32782A8CB00AF8010 /* Assets.xcassets */,
 				625D4CC52782A8CB00AF8010 /* LaunchScreen.storyboard */,
 				625D4CC82782A8CB00AF8010 /* Info.plist */,
@@ -138,6 +141,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				625D4CCF2782AE4A00AF8010 /* Player.swift in Sources */,
 				625D4CBF2782A8C900AF8010 /* ViewController.swift in Sources */,
 				625D4CBB2782A8C900AF8010 /* AppDelegate.swift in Sources */,
 				625D4CBD2782A8C900AF8010 /* SceneDelegate.swift in Sources */,
