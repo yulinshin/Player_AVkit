@@ -8,10 +8,9 @@ import AVFoundation
 import UIKit
 
 class VideoPlayer: UIView {
-
-    let firstUrl = "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8"
-    let secUrl = "http://devimages.apple.com.edgekey.net/streaming/examples/bipbop_16x9/bipbop_16x9_variant.m3u8"
-
+    
+    var playerQueue: [AVPlayerItem] = []
+    var currentTrack = 0
 
     let pausePlayButton: UIButton = {
         let button = UIButton(type: .system)
@@ -44,6 +43,27 @@ class VideoPlayer: UIView {
     }()
 
 
+    let nextTrackButton: UIButton = {
+        let button = UIButton(type: .system)
+        let image = UIImage(systemName: "forward.end")
+        button.setImage(image, for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.tintColor = .white
+        button.addTarget(self, action: #selector(handleNextTrack), for: .touchUpInside)
+        return button
+    }()
+
+    let previousTrackButton: UIButton = {
+        let button = UIButton(type: .system)
+        let image = UIImage(systemName: "backward.end")
+        button.setImage(image, for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.tintColor = .white
+        button.addTarget(self, action: #selector(handlePreviousTrack), for: .touchUpInside)
+        return button
+    }()
+
+
     let activityIndicatorView: UIActivityIndicatorView = {
         let aiView = UIActivityIndicatorView(style: UIActivityIndicatorView.Style.large)
         aiView.translatesAutoresizingMaskIntoConstraints = false
@@ -58,8 +78,18 @@ class VideoPlayer: UIView {
         return view
     }()
 
-    var player: AVPlayer?
-    var isPlaying = false
+    var player: AVQueuePlayer?
+    var isPlaying = false {
+        didSet {
+            if isPlaying {
+                let image = UIImage(systemName: "pause")
+                pausePlayButton.setImage(image, for: .normal)
+            } else {
+                let image = UIImage(systemName: "play")
+                pausePlayButton.setImage(image, for: .normal)
+            }
+        }
+    }
     var isShowingControllers = false {
         didSet{
             if isShowingControllers {
@@ -72,7 +102,11 @@ class VideoPlayer: UIView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        setup()
+    }
+
+    convenience init(frame: CGRect, urlStrs:[String]){
+        self.init(frame: frame)
+        setup(content: urlStrs)
         controlsContainerView.frame = frame
         self.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(showControls)))
         addSubview(controlsContainerView)
@@ -80,6 +114,8 @@ class VideoPlayer: UIView {
         addPauseButton()
         addForwardButton()
         addBackwardButton()
+        addNextTrackButton()
+        addPreviousTrackButton()
     }
 
     required init?(coder: NSCoder) {
@@ -96,14 +132,10 @@ class VideoPlayer: UIView {
 
         if isPlaying {
             player?.pause()
-            let image = UIImage(systemName: "play")
-            pausePlayButton.setImage(image, for: .normal)
             isPlaying = false
 
         } else {
             player?.play()
-            let image = UIImage(systemName: "pause")
-            pausePlayButton.setImage(image, for: .normal)
             isPlaying = true
             isShowingControllers = false
         }
@@ -132,6 +164,32 @@ class VideoPlayer: UIView {
         player.seek(to: time)
     }
 
+    @objc private func handleNextTrack() {
+        if currentTrack + 1 > (playerQueue.count - 1) {
+               currentTrack = 0
+           } else {
+               currentTrack += 1;
+           }
+        player?.replaceCurrentItem(with: playerQueue[currentTrack])
+        activityIndicatorView.startAnimating()
+        player?.play()
+        isPlaying = true
+        isShowingControllers = false
+    }
+
+    @objc private func handlePreviousTrack(){
+        if currentTrack - 1 < 0 {
+              currentTrack = (playerQueue.count - 1) < 0 ? 0 : (playerQueue.count - 1)
+          } else {
+              currentTrack -= 1
+          }
+        player?.replaceCurrentItem(with: playerQueue[currentTrack])
+        activityIndicatorView.startAnimating()
+        player?.play()
+        isPlaying = true
+        isShowingControllers = false
+    }
+
     @objc private func showControls() {
         isShowingControllers = true
         DispatchQueue.main.asyncAfter(deadline: .now()+3 ){
@@ -140,19 +198,17 @@ class VideoPlayer: UIView {
             }
         }
     }
-
-    private func setup() {
+    private func setup(content: [String]) {
         backgroundColor = .black
-        if let url = URL(string: firstUrl) {
-            player = AVPlayer(url: url)
-            let playerLayer = AVPlayerLayer(player: player)
-            self.layer.addSublayer(playerLayer)
-            playerLayer.frame = self.frame
-            player?.play()
-            isPlaying = true
-            isShowingControllers = false
-            player?.addObserver(self, forKeyPath: "currentItem.loadedTimeRanges", options: .new, context: nil)
-        }
+        playerQueue = createPlayerQueue(with: content)
+        player = AVQueuePlayer(playerItem: playerQueue[currentTrack])
+        let playerLayer = AVPlayerLayer(player: player)
+        self.layer.addSublayer(playerLayer)
+        playerLayer.frame = self.frame
+        player?.play()
+        isPlaying = true
+        isShowingControllers = false
+        player?.addObserver(self, forKeyPath: "currentItem.loadedTimeRanges", options: .new, context: nil)
     }
 
     private func addIndicator() {
@@ -185,5 +241,31 @@ class VideoPlayer: UIView {
         backwardButton.widthAnchor.constraint(equalToConstant: 40).isActive = true
         backwardButton.heightAnchor.constraint(equalToConstant: 40).isActive = true
     }
+
+    private func addNextTrackButton() {
+        controlsContainerView.addSubview(nextTrackButton)
+        nextTrackButton.centerYAnchor.constraint(equalTo: centerYAnchor).isActive = true
+        nextTrackButton.leadingAnchor.constraint(equalTo: forwardButton.trailingAnchor, constant: 20).isActive = true
+        nextTrackButton.widthAnchor.constraint(equalToConstant: 40).isActive = true
+        nextTrackButton.heightAnchor.constraint(equalToConstant: 40).isActive = true
+    }
+
+    private func addPreviousTrackButton() {
+        controlsContainerView.addSubview(previousTrackButton)
+        previousTrackButton.centerYAnchor.constraint(equalTo: centerYAnchor).isActive = true
+        previousTrackButton.trailingAnchor.constraint(equalTo: backwardButton.leadingAnchor, constant: -20).isActive = true
+        previousTrackButton.widthAnchor.constraint(equalToConstant: 40).isActive = true
+        previousTrackButton.heightAnchor.constraint(equalToConstant: 40).isActive = true
+    }
+
+    private func createPlayerQueue(with content: [String]) -> [AVPlayerItem] {
+            var playerQueue: [AVPlayerItem] = []
+            content.forEach { urlStr in
+                guard let url = URL(string: urlStr) else { return }
+                let item = AVPlayerItem(url: url)
+                playerQueue.append(item)
+            }
+            return playerQueue
+        }
 
 }
