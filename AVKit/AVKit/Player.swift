@@ -11,6 +11,7 @@ class VideoPlayer: UIView {
     
     var playerQueue: [AVPlayerItem] = []
     var currentTrack = 0
+    private var playerItemContext = 0
 
     let pausePlayButton: UIButton = {
         let button = UIButton(type: .system)
@@ -78,6 +79,35 @@ class VideoPlayer: UIView {
         return view
     }()
 
+    let currentTimeLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = "00:00"
+        label.textColor = .white
+        label.font = UIFont.boldSystemFont(ofSize: 13)
+        return label
+    }()
+
+    let videoLengthLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = "00:00"
+        label.textColor = .white
+        label.font = UIFont.boldSystemFont(ofSize: 14)
+        label.textAlignment = .right
+        return label
+    }()
+
+    lazy var progressSlider: UISlider = {
+        let slider = UISlider()
+        slider.translatesAutoresizingMaskIntoConstraints = false
+        slider.minimumTrackTintColor = .white
+        slider.maximumTrackTintColor = .gray
+        slider.addTarget(self, action: #selector(handleSliderChange), for: .valueChanged)
+
+        return slider
+    }()
+
     var player: AVQueuePlayer?
     var isPlaying = false {
         didSet {
@@ -116,6 +146,9 @@ class VideoPlayer: UIView {
         addBackwardButton()
         addNextTrackButton()
         addPreviousTrackButton()
+        addCurrentTimeLabel()
+        addVideoLengthLabel()
+        addProgressSlider()
     }
 
     required init?(coder: NSCoder) {
@@ -123,8 +156,30 @@ class VideoPlayer: UIView {
     }
 
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        if keyPath == "currentItem.loadedTimeRanges" {
-            activityIndicatorView.stopAnimating()
+        guard context == &playerItemContext else {
+        super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
+            return
+        }
+            if keyPath == #keyPath(AVPlayerItem.loadedTimeRanges) {
+                activityIndicatorView.stopAnimating()
+                if let duration = player?.currentItem?.duration {
+                    let seconds = CMTimeGetSeconds(duration)
+                    let secondsText = Int(seconds) % 60
+                    let minutesText = String(format: "%02d", Int(seconds) / 60)
+                        videoLengthLabel.text = "\(minutesText):\(secondsText)"
+                }
+    
+            }
+    }
+
+    @objc func handleSliderChange() {
+        print(progressSlider.value)
+
+        if let duration = player?.currentItem?.duration {
+            let totalSeconds = CMTimeGetSeconds(duration)
+            let value = Float64(progressSlider.value) * totalSeconds
+            let seekTime = CMTime(value: Int64(value), timescale: 1)
+            player?.seek(to: seekTime)
         }
     }
 
@@ -170,12 +225,15 @@ class VideoPlayer: UIView {
            } else {
                currentTrack += 1;
            }
+        player?.currentItem?.removeObserver(self, forKeyPath: #keyPath(AVPlayerItem.loadedTimeRanges), context:  &self.playerItemContext)
         player?.replaceCurrentItem(with: playerQueue[currentTrack])
         activityIndicatorView.startAnimating()
+        player?.currentItem?.addObserver(self, forKeyPath: #keyPath(AVPlayerItem.loadedTimeRanges), options: [.old, .new], context: &self.playerItemContext )
         player?.play()
         isPlaying = true
         isShowingControllers = false
     }
+
 
     @objc private func handlePreviousTrack(){
         if currentTrack - 1 < 0 {
@@ -183,10 +241,12 @@ class VideoPlayer: UIView {
           } else {
               currentTrack -= 1
           }
+        player?.currentItem?.removeObserver(self, forKeyPath: #keyPath(AVPlayerItem.loadedTimeRanges), context:  &self.playerItemContext)
         player?.replaceCurrentItem(with: playerQueue[currentTrack])
         activityIndicatorView.startAnimating()
+        player?.currentItem?.addObserver(self, forKeyPath: #keyPath(AVPlayerItem.loadedTimeRanges), options: [.old, .new], context: &self.playerItemContext )
+        activityIndicatorView.startAnimating()
         player?.play()
-        isPlaying = true
         isShowingControllers = false
     }
 
@@ -205,10 +265,23 @@ class VideoPlayer: UIView {
         let playerLayer = AVPlayerLayer(player: player)
         self.layer.addSublayer(playerLayer)
         playerLayer.frame = self.frame
+        player?.currentItem?.addObserver(self, forKeyPath: #keyPath(AVPlayerItem.loadedTimeRanges), options: [.old, .new], context: &self.playerItemContext )
         player?.play()
         isPlaying = true
         isShowingControllers = false
-        player?.addObserver(self, forKeyPath: "currentItem.loadedTimeRanges", options: .new, context: nil)
+        let interval = CMTime(value: 1, timescale: 2)
+
+        player?.addPeriodicTimeObserver(forInterval: interval, queue: DispatchQueue.main, using: { (progressTime) in
+            let seconds = CMTimeGetSeconds(progressTime)
+            let secondsString = String(format: "%02d", Int(seconds) % 60)
+            let minutesString = String(format: "%02d", Int(seconds) / 60)
+            if let duration = self.player?.currentItem?.duration {
+                let durationSeconds = CMTimeGetSeconds(duration)
+                self.currentTimeLabel.text = "\(minutesString):\(secondsString)"
+                self.progressSlider.value = Float(seconds / durationSeconds)
+            }
+        })
+
     }
 
     private func addIndicator() {
@@ -256,6 +329,32 @@ class VideoPlayer: UIView {
         previousTrackButton.trailingAnchor.constraint(equalTo: backwardButton.leadingAnchor, constant: -20).isActive = true
         previousTrackButton.widthAnchor.constraint(equalToConstant: 40).isActive = true
         previousTrackButton.heightAnchor.constraint(equalToConstant: 40).isActive = true
+    }
+
+
+    private func addVideoLengthLabel() {
+        controlsContainerView.addSubview(videoLengthLabel)
+        videoLengthLabel.rightAnchor.constraint(equalTo: controlsContainerView.rightAnchor, constant: -8).isActive = true
+        videoLengthLabel.bottomAnchor.constraint(equalTo: bottomAnchor).isActive = true
+        videoLengthLabel.widthAnchor.constraint(equalToConstant: 60).isActive = true
+        videoLengthLabel.heightAnchor.constraint(equalToConstant: 24).isActive = true
+    }
+
+    private func addCurrentTimeLabel() {
+        controlsContainerView.addSubview(currentTimeLabel)
+        currentTimeLabel.leftAnchor.constraint(equalTo: controlsContainerView.leftAnchor, constant: 8).isActive = true
+        currentTimeLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -2).isActive = true
+        currentTimeLabel.widthAnchor.constraint(equalToConstant: 50).isActive = true
+        currentTimeLabel.heightAnchor.constraint(equalToConstant: 24).isActive = true
+    }
+
+    private func addProgressSlider() {
+        controlsContainerView.addSubview(progressSlider)
+        progressSlider.rightAnchor.constraint(equalTo: videoLengthLabel.leftAnchor).isActive = true
+        progressSlider.bottomAnchor.constraint(equalTo: bottomAnchor).isActive = true
+        progressSlider.leftAnchor.constraint(equalTo: currentTimeLabel.rightAnchor).isActive = true
+        progressSlider.heightAnchor.constraint(equalToConstant: 30).isActive = true
+
     }
 
     private func createPlayerQueue(with content: [String]) -> [AVPlayerItem] {
