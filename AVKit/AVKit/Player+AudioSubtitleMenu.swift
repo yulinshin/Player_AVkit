@@ -74,9 +74,7 @@ extension VideoPlayer: UITableViewDelegate, UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-
-        print("didTap\(indexPath.row)")
-
+        
         switch tableView {
         case subtitleTrackMenu:
             subtitleTrackSelectedIndex = indexPath.row
@@ -102,7 +100,7 @@ extension VideoPlayer: UITableViewDelegate, UITableViewDataSource {
         let closeButton: UIButton = {
             let button = UIButton(type: .system)
             let image = UIImage(systemName: "xmark")
-            button.setImage(image, for: .normal)
+             button.setBackgroundImage(image, for: .normal)
             button.translatesAutoresizingMaskIntoConstraints = false
             button.tintColor = .black
             button.addTarget(self, action: #selector(closeMenu), for: .touchUpInside)

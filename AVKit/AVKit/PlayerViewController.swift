@@ -24,6 +24,9 @@ class PlayerViewController: UIViewController {
 
     private func setupPlayer() {
         videoPlayerView = VideoPlayer(frame: self.view.frame, urlStrs: playlist)
+        videoPlayerView?.didFinishedPlaying = {
+            self.dismiss(animated: true, completion: nil)
+        }
         view.addSubview(videoPlayerView!)
         videoPlayerView?.translatesAutoresizingMaskIntoConstraints = false
         videoPlayerView?.centerYAnchor.constraint(equalTo: view.centerYAnchor).isActive = true
