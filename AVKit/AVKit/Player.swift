@@ -8,7 +8,7 @@ import AVFoundation
 import UIKit
 
 class VideoPlayer: UIView {
-    
+    var playerLayer: AVPlayerLayer?
     var playerQueue: [AVPlayerItem] = []
     var currentTrack = 0
     var audioTrackMenu = UITableView()
@@ -180,10 +180,24 @@ class VideoPlayer: UIView {
 
     convenience init(frame: CGRect, urlStrs:[String]){
         self.init(frame: frame)
-        setup(content: urlStrs)
-        controlsContainerView.frame = frame
+        setupPlayList(content: urlStrs)
+        setupLayout()
         self.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(showControls)))
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+
+    private func setupLayout() {
         addSubview(controlsContainerView)
+        controlsContainerView.translatesAutoresizingMaskIntoConstraints = false
+        controlsContainerView.widthAnchor.constraint(equalTo: self.widthAnchor).isActive = true
+        controlsContainerView.heightAnchor.constraint(equalTo: self.heightAnchor).isActive = true
+        controlsContainerView.centerYAnchor.constraint(equalTo: self.centerYAnchor).isActive = true
+        controlsContainerView.centerXAnchor.constraint(equalTo: self.centerXAnchor).isActive = true
+
         addIndicator()
         addPauseButton()
         addForwardButton()
@@ -195,10 +209,6 @@ class VideoPlayer: UIView {
         addProgressSlider()
         addAudioSubtitleButton()
         setupAudioSubtitleMenu()
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
     }
 
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
@@ -307,13 +317,14 @@ class VideoPlayer: UIView {
             }
         }
     }
-    private func setup(content: [String]) {
+    private func setupPlayList(content: [String]) {
         backgroundColor = .black
+        guard content.count != 0 else { return }
         playerQueue = createPlayerQueue(with: content)
         player = AVQueuePlayer(playerItem: playerQueue[currentTrack])
-        let playerLayer = AVPlayerLayer(player: player)
-        self.layer.addSublayer(playerLayer)
-        playerLayer.frame = self.frame
+        playerLayer = AVPlayerLayer(player: player)
+        self.layer.addSublayer(playerLayer!)
+        playerLayer?.frame = self.bounds
         player?.currentItem?.addObserver(self, forKeyPath: #keyPath(AVPlayerItem.loadedTimeRanges), options: [.old, .new], context: &self.playerItemContext )
         player?.play()
         isPlaying = true
@@ -346,6 +357,12 @@ class VideoPlayer: UIView {
         audioTrackSelectedIndex = 0
         subtitleTrackSelectedIndex = 0
     }
+
+    override func layoutSublayers(of layer: CALayer) {
+        super.layoutSublayers(of: layer)
+        playerLayer?.frame = self.bounds
+    }
+
 
     private func addIndicator() {
           self.addSubview(activityIndicatorView)
