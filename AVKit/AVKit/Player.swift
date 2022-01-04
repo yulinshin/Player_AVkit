@@ -11,7 +11,42 @@ class VideoPlayer: UIView {
     
     var playerQueue: [AVPlayerItem] = []
     var currentTrack = 0
+    var audioTrackMenu = UITableView()
+    var subtitleTrackMenu = UITableView()
+    var audioTrackGroup: AVMediaSelectionGroup?
+    var subtitleTrackGroup: AVMediaSelectionGroup?
+    var audioTrackSelectedIndex: Int? {
+        didSet {
+            guard let audioTrackGroup = audioTrackGroup else {
+                return
+            }
+            guard let audioTrackSelectedIndex = audioTrackSelectedIndex else {
+                return
+            }
+            audioTrackMenu.reloadData()
+            player?.currentItem?.select(audioTrackGroup.options[audioTrackSelectedIndex], in: audioTrackGroup)
+        }
+    }
+    var subtitleTrackSelectedIndex: Int? {
+        didSet {
+            guard let subtitleTrackGroup = subtitleTrackGroup else {
+                return
+            }
+            guard let subtitleTrackSelectedIndex = subtitleTrackSelectedIndex else {
+                return
+            }
+            subtitleTrackMenu.reloadData()
+            player?.currentItem?.select(subtitleTrackGroup.options[subtitleTrackSelectedIndex], in: subtitleTrackGroup)
+        }
+    }
     private var playerItemContext = 0
+
+    let audioSubtitleControlsContainerView: UIView = {
+        let view = UIStackView()
+        view.backgroundColor = UIColor.black
+        view.alpha = 0.8
+        return view
+    }()
 
     let pausePlayButton: UIButton = {
         let button = UIButton(type: .system)
@@ -25,7 +60,7 @@ class VideoPlayer: UIView {
 
     let forwardButton: UIButton = {
         let button = UIButton(type: .system)
-        let image = UIImage(systemName: "forward")
+        let image = UIImage(systemName: "goforward.10")
         button.setImage(image, for: .normal)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.tintColor = .white
@@ -35,7 +70,7 @@ class VideoPlayer: UIView {
 
     let backwardButton: UIButton = {
         let button = UIButton(type: .system)
-        let image = UIImage(systemName: "backward")
+        let image = UIImage(systemName: "goforward.10")
         button.setImage(image, for: .normal)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.tintColor = .white
@@ -64,6 +99,15 @@ class VideoPlayer: UIView {
         return button
     }()
 
+    let audioSubtitlesTrackButton: UIButton = {
+        let button = UIButton(type: .system)
+        let image = UIImage(systemName: "dock.rectangle")
+        button.setImage(image, for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.tintColor = .white
+        button.addTarget(self, action: #selector(handleAudioSubtitles), for: .touchUpInside)
+        return button
+    }()
 
     let activityIndicatorView: UIActivityIndicatorView = {
         let aiView = UIActivityIndicatorView(style: UIActivityIndicatorView.Style.large)
@@ -149,6 +193,8 @@ class VideoPlayer: UIView {
         addCurrentTimeLabel()
         addVideoLengthLabel()
         addProgressSlider()
+        addAudioSubtitleButton()
+        setupAudioSubtitleMenu()
     }
 
     required init?(coder: NSCoder) {
@@ -172,9 +218,12 @@ class VideoPlayer: UIView {
             }
     }
 
-    @objc func handleSliderChange() {
-        print(progressSlider.value)
+    @objc func handleAudioSubtitles() {
+        showAudioSubtitleMenu()
+    }
 
+
+    @objc func handleSliderChange() {
         if let duration = player?.currentItem?.duration {
             let totalSeconds = CMTimeGetSeconds(duration)
             let value = Float64(progressSlider.value) * totalSeconds
@@ -269,8 +318,9 @@ class VideoPlayer: UIView {
         player?.play()
         isPlaying = true
         isShowingControllers = false
-        let interval = CMTime(value: 1, timescale: 2)
+        player?.appliesMediaSelectionCriteriaAutomatically = false
 
+        let interval = CMTime(value: 1, timescale: 2)
         player?.addPeriodicTimeObserver(forInterval: interval, queue: DispatchQueue.main, using: { (progressTime) in
             let seconds = CMTimeGetSeconds(progressTime)
             let secondsString = String(format: "%02d", Int(seconds) % 60)
@@ -282,6 +332,19 @@ class VideoPlayer: UIView {
             }
         })
 
+        guard let asset = player?.currentItem?.asset else {
+            return
+        }
+
+        if let group = asset.mediaSelectionGroup(forMediaCharacteristic: AVMediaCharacteristic.audible) {
+                audioTrackGroup = group
+        }
+        if let group = asset.mediaSelectionGroup(forMediaCharacteristic: AVMediaCharacteristic.legible) {
+                subtitleTrackGroup = group
+        }
+
+        audioTrackSelectedIndex = 0
+        subtitleTrackSelectedIndex = 0
     }
 
     private func addIndicator() {
@@ -355,6 +418,14 @@ class VideoPlayer: UIView {
         progressSlider.leftAnchor.constraint(equalTo: currentTimeLabel.rightAnchor).isActive = true
         progressSlider.heightAnchor.constraint(equalToConstant: 30).isActive = true
 
+    }
+
+    private func addAudioSubtitleButton() {
+        controlsContainerView.addSubview(audioSubtitlesTrackButton)
+        audioSubtitlesTrackButton.topAnchor.constraint(equalTo: controlsContainerView.topAnchor, constant: 20).isActive = true
+        audioSubtitlesTrackButton.trailingAnchor.constraint(equalTo: controlsContainerView.trailingAnchor, constant: -20).isActive = true
+        audioSubtitlesTrackButton.widthAnchor.constraint(equalToConstant: 40).isActive = true
+        audioSubtitlesTrackButton.heightAnchor.constraint(equalToConstant: 40).isActive = true
     }
 
     private func createPlayerQueue(with content: [String]) -> [AVPlayerItem] {
