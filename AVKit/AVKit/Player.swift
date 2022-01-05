@@ -162,6 +162,17 @@ class VideoPlayer: UIView {
         return slider
     }()
 
+    private let closeButton: UIButton = {
+        let button = UIButton(type: .system)
+        let image = UIImage(systemName: "xmark")
+        button.setBackgroundImage(image, for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.tintColor = .white
+        button.addTarget(self, action: #selector(playerDidFinishPlaying), for: .touchUpInside)
+        return button
+    }()
+
+
     //MARK: - Audio & Subtitle Setting Menu
 
     let audioSubtitleControlsContainerView: UIView = {
@@ -312,6 +323,10 @@ class VideoPlayer: UIView {
     }
 
     @objc private func playerDidFinishPlaying(){
+        if let play = player {
+               play.pause()
+               player = nil
+           } 
         didFinishedPlaying?()
     }
 
@@ -423,6 +438,11 @@ class VideoPlayer: UIView {
             progressSlider.leftAnchor.constraint(equalTo: currentTimeLabel.rightAnchor).isActive = true
             progressSlider.heightAnchor.constraint(equalToConstant: 30).isActive = true
 
+            closeButton.leftAnchor.constraint(equalTo: controlsContainerView.leftAnchor, constant: 10).isActive = true
+            closeButton.topAnchor.constraint(equalTo: topAnchor, constant: 10).isActive = true
+            closeButton.widthAnchor.constraint(equalToConstant: 24).isActive = true
+            closeButton.heightAnchor.constraint(equalToConstant: 24).isActive = true
+
             audioSubtitlesTrackButton.bottomAnchor.constraint(equalTo: controlsContainerView.bottomAnchor, constant: -20).isActive = true
             audioSubtitlesTrackButton.trailingAnchor.constraint(equalTo: controlsContainerView.trailingAnchor, constant: -30).isActive = true
             audioSubtitlesTrackButton.widthAnchor.constraint(equalToConstant: buttonSize).isActive = true
@@ -437,6 +457,7 @@ class VideoPlayer: UIView {
             controlsContainerView.addSubview(videoLengthLabel)
             controlsContainerView.addSubview(progressSlider)
             controlsContainerView.addSubview(nextTrackButton)
+            controlsContainerView.addSubview(closeButton)
             controlsContainerView.addSubview(audioSubtitlesTrackButton)
         }
 }
