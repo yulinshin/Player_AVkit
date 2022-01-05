@@ -39,7 +39,7 @@ class VideoPlayer: UIView {
         }
     }
 
-    private var isShowingControllers = false {
+    var isShowingControllers = false {
         didSet{
             if isShowingControllers {
                 controlsContainerView.backgroundColor = UIColor(white: 0, alpha: 0.5)
@@ -48,6 +48,15 @@ class VideoPlayer: UIView {
                 controlsContainerView.backgroundColor = UIColor(white: 0, alpha: 0)
                 controlsContainerView.subviews.forEach { $0.isHidden = true }
             }
+
+            checkIfIsLastItem()
+
+        }
+    }
+
+    private func checkIfIsLastItem() {
+        if player?.currentItem == player?.items().last {
+            nextTrackButton.isHidden = true
         }
     }
 
