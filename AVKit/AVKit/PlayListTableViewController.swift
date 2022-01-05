@@ -41,7 +41,16 @@ class PlayListTableViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
 
         let playerController = PlayerViewController()
-        playerController.playlist = videoUrls
+        let playList: [String] = {
+            var list = [String]()
+            for (index, urlStr) in videoUrls.enumerated() {
+                if index >= indexPath.row{
+                    list.append(urlStr)
+                }
+            }
+            return list
+        }()
+        playerController.playlist = playList
         playerController.modalPresentationStyle = .fullScreen
         self.present(playerController, animated: true, completion: nil)
 
