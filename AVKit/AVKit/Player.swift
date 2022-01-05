@@ -461,3 +461,15 @@ class VideoPlayer: UIView {
             controlsContainerView.addSubview(audioSubtitlesTrackButton)
         }
 }
+
+
+#if DEBUG
+extension VideoPlayer {
+    public func exposePrivatePlayer() -> AVQueuePlayer? {
+        return self.player
+    }
+    public func exposePrivatePlayerIsPlaying() -> Bool {
+        return self.isPlaying
+    }
+}
+#endif
