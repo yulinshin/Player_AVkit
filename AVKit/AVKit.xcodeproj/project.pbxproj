@@ -67,6 +67,7 @@
 				625D4CBA2782A8C900AF8010 /* AppDelegate.swift */,
 				625D4CBC2782A8C900AF8010 /* SceneDelegate.swift */,
 				625D4CBE2782A8C900AF8010 /* PlayerViewController.swift */,
+				620841CA27845D06007EE408 /* PlayListTableViewController.swift */,
 				625D4CC02782A8C900AF8010 /* Main.storyboard */,
 				625D4CCE2782AE4A00AF8010 /* Player.swift */,
 				620841C627840AA7007EE408 /* Player+AudioSubtitleMenu.swift */,
@@ -74,7 +75,6 @@
 				625D4CC52782A8CB00AF8010 /* LaunchScreen.storyboard */,
 				625D4CC82782A8CB00AF8010 /* Info.plist */,
 				620841C827845A9D007EE408 /* Model.swift */,
-				620841CA27845D06007EE408 /* PlayListTableViewController.swift */,
 			);
 			path = AVKit;
 			sourceTree = "<group>";

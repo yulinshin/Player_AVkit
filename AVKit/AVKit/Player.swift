@@ -20,6 +20,12 @@ class VideoPlayer: UIView {
     var subtitleTrackGroup: AVMediaSelectionGroup?
     var didFinishedPlaying: (() -> Void )?
 
+    lazy var tapScreenGesture: UITapGestureRecognizer = {
+        let tap = UITapGestureRecognizer(target: self, action: #selector(didTapScreen))
+        tap.numberOfTapsRequired = 1
+        return tap
+    }()
+
 //MARK: - Player Status
     private var isPlaying = false {
         didSet {
@@ -151,7 +157,7 @@ class VideoPlayer: UIView {
 
     let audioSubtitleControlsContainerView: UIView = {
         let view = UIStackView()
-        view.backgroundColor = UIColor(white: 0, alpha: 0.5)
+        view.backgroundColor = UIColor(white: 0, alpha: 0.8)
         view.isHidden = true
         return view
     }()
@@ -186,7 +192,9 @@ class VideoPlayer: UIView {
 
     convenience init(frame: CGRect, urlStrs:[String]){
         self.init(frame: frame)
-        self.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(didTapScreen)))
+        self.addGestureRecognizer(tapScreenGesture)
+        self.isUserInteractionEnabled = true
+        tapScreenGesture.isEnabled = true
         backgroundColor = .black
         setupPlayList(content: urlStrs)
         addIndicator()
@@ -359,6 +367,7 @@ class VideoPlayer: UIView {
     }
 
     //MARK: - UI Element Layout
+
         private func setupControlsLayout(){
 
             let largeButtonSize: CGFloat = 28
@@ -421,5 +430,4 @@ class VideoPlayer: UIView {
             controlsContainerView.addSubview(nextTrackButton)
             controlsContainerView.addSubview(audioSubtitlesTrackButton)
         }
-
 }

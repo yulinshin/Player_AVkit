@@ -29,7 +29,6 @@ class PlayListTableViewController: UITableViewController {
         return  videoUrls.count
     }
 
-
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
         if let textLabel = cell.textLabel {
