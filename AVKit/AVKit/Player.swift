@@ -315,7 +315,6 @@ class VideoPlayer: UIView {
         player?.currentItem?.removeObserver(self, forKeyPath: #keyPath(AVPlayerItem.loadedTimeRanges), context: &self.playerItemContext)
         player?.advanceToNextItem()
         player?.currentItem?.addObserver(self, forKeyPath: #keyPath(AVPlayerItem.loadedTimeRanges), options: [.old, .new], context: &self.playerItemContext)
-        NotificationCenter.default.addObserver(self, selector: #selector(self.playerDidFinishPlaying), name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: player?.currentItem)
         activityIndicatorView.startAnimating()
         player?.play()
         isPlaying = true
@@ -335,6 +334,7 @@ class VideoPlayer: UIView {
         guard content.count != 0 else { return }
         playerQueue = createPlayerQueue(with: content)
         player = AVQueuePlayer(items: playerQueue)
+        NotificationCenter.default.addObserver(self, selector: #selector(self.playerDidFinishPlaying), name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: playerQueue.last)
         playerLayer = AVPlayerLayer(player: player)
         playerLayer?.frame = self.bounds
         self.layer.addSublayer(playerLayer!)
